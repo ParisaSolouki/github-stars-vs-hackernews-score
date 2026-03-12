@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import mysql.connector
 
 load_dotenv()
+
+
 # %%
 # =====================================
 # 1) Fetch Hacker News Top Stories IDs
@@ -44,4 +46,50 @@ def fetch_topstories_ids(url=TOPSTORIES_URL, timeout=10):
 
 
 top_ids, run_time_utc = fetch_topstories_ids()
+
+
+# %%
+# =====================================
+# 2) Extract Posts Data -> df_hn_posts
+# =====================================
+session = requests.Session()
+headers = {"User-Agent": "hn_github_tracker/1.0 (data project)"}
+session.headers.update(headers)
+
+
+rows = []
+
+
+for item_id in top_ids:
+    item_url = f"https://hacker-news.firebaseio.com/v0/item/{item_id}.json"
+
+    try:
+        resp = session.get(item_url, timeout=10)
+        resp.raise_for_status()
+        item = resp.json()
+
+        if not isinstance(item, dict):
+            continue
+
+        rows.append(
+            {
+                "hn_id": item.get("id"),
+                "title": item.get("title"),
+                "author": item.get("by"),
+                "comments": item.get("descendants"),
+                "score": item.get("score"),
+                "time_unix": item.get("time"),
+                "url": item.get("url"),
+                "type": item.get("type"),
+            }
+        )
+
+    except requests.exceptions.RequestException:
+        continue
+
+
+df_hn_posts = pd.DataFrame(rows)
+df_hn_posts.head(10)
+
+
 # %%
