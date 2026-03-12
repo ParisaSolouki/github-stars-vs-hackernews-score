@@ -93,3 +93,15 @@ df_hn_posts.head(10)
 
 
 # %%
+df_hn_posts["post_time"] = pd.to_datetime(
+    df_hn_posts["time_unix"], unit="s", utc=True, errors="coerce"
+)
+
+print("HN posts shape:", df_hn_posts.shape)
+print("Null url:", df_hn_posts["url"].isna().sum())
+print("Type counts:\n", df_hn_posts["type"].value_counts(dropna=False).head(10))
+
+df_hn_posts.head(10)
+
+
+# %%
