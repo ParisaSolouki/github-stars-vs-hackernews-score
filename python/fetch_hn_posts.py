@@ -134,3 +134,43 @@ print("GitHub non-gist URLs:", df_hn_github_posts.shape[0])
 
 
 # %%
+# =====================================
+# 4) Extract owner/repo/full_name from URL (robust)
+# =====================================
+pattern = r"github\.com/([^/]+)/([^/#?]+)"
+
+df_hn_github_posts[["owner", "repo_raw"]] = df_hn_github_posts["url"].str.extract(
+    pattern
+)
+
+
+df_hn_github_posts["repo"] = (
+    df_hn_github_posts["repo_raw"]
+    .str.replace(r"\.git$", "", regex=True)
+    .str.replace(r"\s+", "", regex=True)
+)
+
+
+df_hn_github_posts["full_name"] = (
+    df_hn_github_posts["owner"] + "/" + df_hn_github_posts["repo"]
+)
+df_hn_github_posts.head(10)
+
+
+# %%
+# Bad Extracts
+bad = df_hn_github_posts[
+    df_hn_github_posts["owner"].isna() | df_hn_github_posts["repo"].isna()
+]
+print("Bad extracts:", len(bad))
+bad[["hn_id", "url"]].head(10)
+
+
+# # Keep only rows with valid owner and repo
+df_hn_github_posts = df_hn_github_posts.dropna(subset=["owner", "repo"]).copy()
+
+print("Final GitHub repo links:", df_hn_github_posts.shape[0])
+df_hn_github_posts[["hn_id", "full_name", "url"]].head(10)
+
+
+# %%
