@@ -105,3 +105,32 @@ df_hn_posts.head(10)
 
 
 # %%
+# =====================================
+# 3) Filter GitHub URLs -> df_hn_github_posts
+# =====================================
+
+df_hn_posts["url"] = df_hn_posts["url"].fillna("").astype(str)
+
+github_mask = df_hn_posts["url"].str.contains(r"github\.com", case=False, na=False)
+df_hn_github_posts = df_hn_posts[github_mask].copy()
+
+print("GitHub URLs found:", df_hn_github_posts.shape[0])
+df_hn_github_posts[["hn_id", "url"]].head(10)
+
+
+# %%
+domains = df_hn_github_posts["url"].str.extract(r"https?://([^/]+)/")
+print(domains.value_counts().head(10))
+
+
+# %%
+gist_mask = df_hn_github_posts["url"].str.contains(
+    r"gist\.github\.com", case=False, na=False
+)
+print("Gist URLs:", gist_mask.sum())
+
+df_hn_github_posts = df_hn_github_posts[~gist_mask].copy()
+print("GitHub non-gist URLs:", df_hn_github_posts.shape[0])
+
+
+# %%
