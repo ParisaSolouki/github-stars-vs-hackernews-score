@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 import mysql.connector
 
+# Load environment variables from .env
 load_dotenv()
 
 
@@ -171,6 +172,69 @@ df_hn_github_posts = df_hn_github_posts.dropna(subset=["owner", "repo"]).copy()
 
 print("Final GitHub repo links:", df_hn_github_posts.shape[0])
 df_hn_github_posts[["hn_id", "full_name", "url"]].head(10)
+
+
+# %%
+# =====================================
+# 5) Fetch GitHub Repository Data -> df_github_repos
+# =====================================
+
+unique_repos = df_hn_github_posts[["owner", "repo", "full_name"]].drop_duplicates()
+print("Unique repos:", unique_repos.shape[0])
+
+
+headers = {
+    "User-Agent": "hn_github_tracker/1.0 (data project)",
+}
+
+
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+if GITHUB_TOKEN:
+    headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+
+
+session = requests.Session()
+session.headers.update(headers)
+
+
+rows = []
+success = 0
+failed = 0
+
+
+for r in unique_repos.itertuples():
+    owner = r.owner
+    repo = r.repo
+    url = f"https://api.github.com/repos/{owner}/{repo}"
+
+    try:
+        resp = session.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+
+        rows.append(
+            {
+                "full_name": data.get("full_name"),
+                "stars": data.get("stargazers_count"),
+                "language": data.get("language"),
+                "forks": data.get("forks_count"),
+                "open_issues": data.get("open_issues_count"),
+                "updated_at": data.get("updated_at"),
+            }
+        )
+        success += 1
+
+    except requests.exceptions.RequestException:
+        failed += 1
+        continue
+
+df_github_repos = pd.DataFrame(rows)
+
+print("Fetched OK:", success)
+print("Failed:", failed)
+print("df_github_repos shape:", df_github_repos.shape)
+
+df_github_repos.head()
 
 
 # %%
