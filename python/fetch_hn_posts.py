@@ -238,3 +238,35 @@ df_github_repos.head()
 
 
 # %%
+# =====================================
+# 6) Prepare GitHub Data for MySQL
+# =====================================
+
+df_github_repos[["owner", "repo"]] = df_github_repos["full_name"].str.split(
+    "/", expand=True
+)
+
+df_github_repos["updated_at"] = pd.to_datetime(
+    df_github_repos["updated_at"], utc=True, errors="coerce"
+).dt.tz_convert(None)
+
+
+df_to_db = df_github_repos[
+    [
+        "full_name",
+        "owner",
+        "repo",
+        "stars",
+        "language",
+        "forks",
+        "open_issues",
+        "updated_at",
+    ]
+].copy()
+
+print("df_to_db shape:", df_to_db.shape)
+
+
+df_to_db.head()
+
+# %%
