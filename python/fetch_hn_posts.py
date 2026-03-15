@@ -269,7 +269,11 @@ print("df_to_db shape:", df_to_db.shape)
 
 df_to_db.head()
 
+
 # %%
+# =====================================
+# 7) Connect to MySQL
+# =====================================
 conn = mysql.connector.connect(
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
