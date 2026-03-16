@@ -284,4 +284,16 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 print("Connected to database")
 
+
+# %%
+# =====================================
+# 8) Prepare rows for insert
+# =====================================
+repo_rows = []
+
+for row in df_to_db.itertuples(index=False, name=None):
+    repo_rows.append(row)
+
+print("repo_rows len:", len(repo_rows))
+
 # %%
