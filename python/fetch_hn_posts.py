@@ -296,4 +296,28 @@ for row in df_to_db.itertuples(index=False, name=None):
 
 print("repo_rows len:", len(repo_rows))
 
+
+# %%
+# =====================================
+# 9) Upsert GitHub Repositories
+# =====================================
+
+repo_insert_sql = """
+INSERT INTO github_repos
+(full_name, owner, repo, stars, language, forks, open_issues, updated_at)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+ON DUPLICATE KEY UPDATE
+    stars = VALUES(stars),
+    language = VALUES(language),
+    forks = VALUES(forks),
+    open_issues = VALUES(open_issues),
+    updated_at = VALUES(updated_at);
+"""
+
+cursor.executemany(repo_insert_sql, repo_rows)
+conn.commit()
+
+print("GitHub repos upsert completed")
+
+
 # %%
