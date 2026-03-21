@@ -42,3 +42,13 @@ CREATE TABLE IF NOT EXISTS hn_posts (
 );
 
 
+-- =====================================
+-- 3) Indexes
+-- =====================================
+
+CREATE INDEX idx_hn_posts_repo_id ON hn_posts(repo_id);
+CREATE INDEX idx_hn_posts_full_name ON hn_posts(full_name);
+CREATE INDEX idx_github_full_name ON github_repos(full_name);
+
+
+
