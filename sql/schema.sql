@@ -23,3 +23,22 @@ CREATE TABLE IF NOT EXISTS github_repos (
   updated_at DATETIME,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- =====================================
+-- 2) Table: hn_posts
+-- =====================================
+
+CREATE TABLE IF NOT EXISTS hn_posts (
+  hn_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  title VARCHAR(300) NOT NULL,
+  author VARCHAR(80) NOT NULL,
+  comments INT UNSIGNED,
+  score INT UNSIGNED,
+  post_time DATETIME NOT NULL,
+  url VARCHAR(2048),
+  repo_id BIGINT UNSIGNED,
+  full_name VARCHAR(200)
+);
+
+
