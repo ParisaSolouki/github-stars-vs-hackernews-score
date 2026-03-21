@@ -339,3 +339,13 @@ print("repo_id linking completed")
 
 
 # %%
+# =====================================
+# 14) Close DB connection
+# =====================================
+
+cursor.close()
+conn.close()
+
+
+print("Connection closed")
+# %%
