@@ -321,3 +321,56 @@ print("GitHub repos upsert completed")
 
 
 # %%
+# =====================================
+# 10) Prepare HN Posts for MySQL -> hn_to_db
+# =====================================
+
+hn_to_db = df_hn_posts.copy()
+
+# clean url
+hn_to_db["url"] = hn_to_db["url"].fillna("").astype(str)
+
+# clean important text columns
+hn_to_db["title"] = hn_to_db["title"].astype("string")
+hn_to_db["author"] = hn_to_db["author"].astype("string")
+
+# remove broken rows
+hn_to_db = hn_to_db.dropna(subset=["hn_id", "title", "author", "post_time"]).copy()
+
+# extract full_name from GitHub URLs for later linking
+pattern = r"github\.com/([^/]+)/([^/#?]+)"
+hn_to_db[["owner_tmp", "repo_tmp"]] = hn_to_db["url"].str.extract(pattern)
+
+hn_to_db["repo_tmp"] = (
+    hn_to_db["repo_tmp"]
+    .str.replace(r"\.git$", "", regex=True)
+    .str.replace(r"\s+", "", regex=True)
+)
+
+hn_to_db["full_name"] = hn_to_db["owner_tmp"] + "/" + hn_to_db["repo_tmp"]
+
+# repo_id will be filled later
+hn_to_db["repo_id"] = None
+
+# keep only columns needed for MySQL
+hn_to_db = hn_to_db[
+    [
+        "hn_id",
+        "title",
+        "author",
+        "comments",
+        "score",
+        "post_time",
+        "url",
+        "repo_id",
+        "full_name",
+    ]
+].copy()
+
+print("hn_to_db shape:", hn_to_db.shape)
+print("full_name not null:", hn_to_db["full_name"].notna().sum())
+
+hn_to_db.head()
+
+
+# %%
