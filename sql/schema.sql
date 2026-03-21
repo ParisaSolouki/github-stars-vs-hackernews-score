@@ -51,4 +51,14 @@ CREATE INDEX idx_hn_posts_full_name ON hn_posts(full_name);
 CREATE INDEX idx_github_full_name ON github_repos(full_name);
 
 
+-- =====================================
+-- 4) Foreign Key
+-- =====================================
+
+ALTER TABLE hn_posts
+ADD CONSTRAINT fk_hn_posts_repo
+FOREIGN KEY (repo_id)
+REFERENCES github_repos(repo_id)
+ON DELETE SET NULL;
+
 
