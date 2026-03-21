@@ -322,94 +322,20 @@ print("GitHub repos upsert completed")
 
 # %%
 # =====================================
-# 10) Prepare HN Posts for MySQL -> hn_to_db
+# 13) Link repo_id using UPDATE JOIN
 # =====================================
 
-hn_to_db = df_hn_posts.copy()
-
-# clean url
-hn_to_db["url"] = hn_to_db["url"].fillna("").astype(str)
-
-# clean important text columns
-hn_to_db["title"] = hn_to_db["title"].astype("string")
-hn_to_db["author"] = hn_to_db["author"].astype("string")
-
-# remove broken rows
-hn_to_db = hn_to_db.dropna(subset=["hn_id", "title", "author", "post_time"]).copy()
-
-# extract full_name from GitHub URLs for later linking
-pattern = r"github\.com/([^/]+)/([^/#?]+)"
-hn_to_db[["owner_tmp", "repo_tmp"]] = hn_to_db["url"].str.extract(pattern)
-
-hn_to_db["repo_tmp"] = (
-    hn_to_db["repo_tmp"]
-    .str.replace(r"\.git$", "", regex=True)
-    .str.replace(r"\s+", "", regex=True)
-)
-
-hn_to_db["full_name"] = hn_to_db["owner_tmp"] + "/" + hn_to_db["repo_tmp"]
-
-# repo_id will be filled later
-hn_to_db["repo_id"] = None
-
-# keep only columns needed for MySQL
-hn_to_db = hn_to_db[
-    [
-        "hn_id",
-        "title",
-        "author",
-        "comments",
-        "score",
-        "post_time",
-        "url",
-        "repo_id",
-        "full_name",
-    ]
-].copy()
-
-print("hn_to_db shape:", hn_to_db.shape)
-print("full_name not null:", hn_to_db["full_name"].notna().sum())
-
-hn_to_db.head()
-
-
-# %%
-# =====================================
-# 11) Prepare HN rows for insert
-# =====================================
-
-post_rows = []
-
-for row in hn_to_db.itertuples(index=False, name=None):
-    post_rows.append(row)
-
-print("post_rows len:", len(post_rows))
-
-
-# %%
-# =====================================
-# 12) Upsert HN Posts
-# =====================================
-
-post_insert_sql = """
-INSERT INTO hn_posts
-(hn_id, title, author, comments, score, post_time, url, repo_id, full_name)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON DUPLICATE KEY UPDATE
-    title = VALUES(title),
-    author = VALUES(author),
-    comments = VALUES(comments),
-    score = VALUES(score),
-    post_time = VALUES(post_time),
-    url = VALUES(url),
-    repo_id = VALUES(repo_id),
-    full_name = VALUES(full_name);
+link_sql = """
+UPDATE hn_posts h
+JOIN github_repos g
+ON h.full_name = g.full_name
+SET h.repo_id = g.repo_id;
 """
 
-cursor.executemany(post_insert_sql, post_rows)
+cursor.execute(link_sql)
 conn.commit()
 
-print("HN posts upsert completed")
+print("repo_id linking completed")
 
 
 # %%
