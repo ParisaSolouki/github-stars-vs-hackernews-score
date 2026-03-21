@@ -374,3 +374,16 @@ hn_to_db.head()
 
 
 # %%
+# =====================================
+# 11) Prepare HN rows for insert
+# =====================================
+
+post_rows = []
+
+for row in hn_to_db.itertuples(index=False, name=None):
+    post_rows.append(row)
+
+print("post_rows len:", len(post_rows))
+
+
+# %%
