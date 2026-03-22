@@ -441,6 +441,3 @@ conn.close()
 
 print("Connection closed")
 # %%
-print("hn_to_db shape:", hn_to_db.shape)
-print("full_name not null:", hn_to_db["full_name"].notna().sum())
-# %%
