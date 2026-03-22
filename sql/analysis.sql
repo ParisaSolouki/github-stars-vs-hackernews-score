@@ -50,3 +50,24 @@ FROM hn_posts h
 JOIN github_repos g
     ON h.repo_id = g.repo_id
 ORDER BY g.stars DESC;
+
+
+-- =====================================
+-- 5) Outliers using quartiles (data-driven)
+-- =====================================
+
+SELECT *
+FROM (
+    SELECT
+        h.title,
+        h.score,
+        g.stars,
+        NTILE(4) OVER (ORDER BY g.stars ASC) AS stars_quartile,
+        NTILE(4) OVER (ORDER BY h.score ASC) AS score_quartile
+    FROM hn_posts h
+    JOIN github_repos g
+        ON h.repo_id = g.repo_id
+) AS ranked_data
+WHERE stars_quartile = 1
+  AND score_quartile = 4
+ORDER BY score DESC;
