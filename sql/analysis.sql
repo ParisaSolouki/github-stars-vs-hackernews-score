@@ -38,3 +38,15 @@ JOIN github_repos g
     ON h.repo_id = g.repo_id
 GROUP BY star_group
 ORDER BY avg_hn_score DESC;
+
+-- =====================================
+-- 4) Distribution check: score vs stars
+-- =====================================
+
+SELECT 
+    h.score,
+    g.stars
+FROM hn_posts h
+JOIN github_repos g
+    ON h.repo_id = g.repo_id
+ORDER BY g.stars DESC;
