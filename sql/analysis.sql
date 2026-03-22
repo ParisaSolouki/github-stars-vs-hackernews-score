@@ -93,3 +93,18 @@ FROM (
 ) AS ranked_data
 GROUP BY stars_quartile, score_quartile
 ORDER BY stars_quartile, score_quartile;
+
+
+-- =====================================
+-- 6) Top performing repositories
+-- =====================================
+
+SELECT 
+    h.title,
+    h.score,
+    g.stars
+FROM hn_posts h
+JOIN github_repos g
+    ON h.repo_id = g.repo_id
+ORDER BY h.score DESC, g.stars DESC
+LIMIT 10;
