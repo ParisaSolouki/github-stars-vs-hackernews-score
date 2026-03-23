@@ -65,3 +65,50 @@ FROM (
 GROUP BY stars_group
 ORDER BY stars_group;
 
+-- =====================================
+-- 4) Outlier detection using quartiles
+-- =====================================
+-- low stars but high score
+
+SELECT 
+    title,
+    score,
+    stars
+FROM (
+    SELECT
+        h.title,
+        h.score,
+        g.stars,
+        NTILE(4) OVER (ORDER BY g.stars ASC) AS stars_quartile,
+        NTILE(4) OVER (ORDER BY h.score ASC) AS score_quartile
+    FROM hn_posts h
+    JOIN github_repos g
+        ON h.repo_id = g.repo_id
+) AS ranked_data
+WHERE stars_quartile = 1
+  AND score_quartile = 4
+ORDER BY score DESC;
+
+
+
+-- high stars but low score
+
+SELECT 
+    title,
+    score,
+    stars
+FROM (
+    SELECT
+        h.title,
+        h.score,
+        g.stars,
+        NTILE(4) OVER (ORDER BY g.stars ASC) AS stars_quartile,
+        NTILE(4) OVER (ORDER BY h.score ASC) AS score_quartile
+    FROM hn_posts h
+    JOIN github_repos g
+        ON h.repo_id = g.repo_id
+) AS ranked_data
+WHERE stars_quartile = 4
+  AND score_quartile = 1
+ORDER BY stars DESC;
+
