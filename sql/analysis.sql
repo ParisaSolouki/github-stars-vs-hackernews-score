@@ -134,3 +134,20 @@ FROM (
 GROUP BY stars_quartile, score_quartile
 ORDER BY stars_quartile, score_quartile;
 
+-- =====================================
+-- 6) Top performing repositories (repo-level)
+-- =====================================
+
+SELECT 
+    g.full_name,
+    COUNT(h.hn_id) AS num_posts,
+    AVG(h.score) AS avg_hn_score,
+    MAX(h.score) AS max_hn_score,
+    AVG(g.stars) AS avg_github_stars
+FROM hn_posts h
+JOIN github_repos g
+    ON h.repo_id = g.repo_id
+GROUP BY g.repo_id, g.full_name
+ORDER BY avg_hn_score DESC
+LIMIT 10;
+
