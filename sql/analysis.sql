@@ -112,3 +112,25 @@ WHERE stars_quartile = 4
   AND score_quartile = 1
 ORDER BY stars DESC;
 
+-- =====================================
+-- 5) Quartile cross-tab: score vs stars
+-- =====================================
+
+SELECT
+    stars_quartile,
+    score_quartile,
+    COUNT(*) AS num_repos
+FROM (
+    SELECT
+        h.title,
+        h.score,
+        g.stars,
+        NTILE(4) OVER (ORDER BY g.stars ASC) AS stars_quartile,
+        NTILE(4) OVER (ORDER BY h.score ASC) AS score_quartile
+    FROM hn_posts h
+    JOIN github_repos g
+        ON h.repo_id = g.repo_id
+) AS ranked_data
+GROUP BY stars_quartile, score_quartile
+ORDER BY stars_quartile, score_quartile;
+
