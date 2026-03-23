@@ -151,3 +151,23 @@ GROUP BY g.repo_id, g.full_name
 ORDER BY avg_hn_score DESC
 LIMIT 10;
 
+
+-- =====================================
+-- 7) Distribution dataset for analysis (Python)
+-- =====================================
+
+SELECT 
+    h.hn_id,
+    h.score AS hn_score,
+    h.comments AS hn_comments,
+    g.repo_id,
+    g.stars AS github_stars,
+    g.forks AS github_forks,
+    g.language
+FROM hn_posts h
+JOIN github_repos g
+    ON h.repo_id = g.repo_id
+WHERE h.score IS NOT NULL
+  AND g.stars IS NOT NULL
+  AND h.score > 0
+  AND g.stars > 0;
