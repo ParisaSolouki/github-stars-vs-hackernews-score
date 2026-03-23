@@ -37,3 +37,31 @@ SELECT
 FROM hn_posts h
 JOIN github_repos g
     ON h.repo_id = g.repo_id;
+
+-- =====================================
+-- 3) Data-driven grouping using star quantiles
+-- =====================================
+
+SELECT 
+    CASE 
+        WHEN stars_group = 1 THEN 'low'
+        WHEN stars_group = 2 THEN 'medium'
+        ELSE 'high'
+    END AS star_group,
+    COUNT(*) AS num_repos,
+    AVG(stars) AS avg_github_stars,
+    AVG(score) AS avg_hn_score,
+    MIN(score) AS min_hn_score,
+    MAX(score) AS max_hn_score
+FROM (
+    SELECT 
+        h.score,
+        g.stars,
+        NTILE(3) OVER (ORDER BY g.stars ASC) AS stars_group
+    FROM hn_posts h
+    JOIN github_repos g
+        ON h.repo_id = g.repo_id
+) AS ranked_data
+GROUP BY stars_group
+ORDER BY stars_group;
+
