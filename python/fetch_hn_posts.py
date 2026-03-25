@@ -486,4 +486,29 @@ print("df_analysis shape:", df_analysis.shape)
 
 
 df_analysis.head()
+
+
+# %%
+# =====================================
+# 16) Dataset Structure
+# =====================================
+
+df_analysis.info()
+
+
+# %%
+# =====================================
+# 17) Summary Statistics
+# =====================================
+
+df_analysis.describe()
+
+
+# %%
+# =====================================
+# 18) Missing Values Check
+# =====================================
+
+df_analysis.isna().sum()
+
 # %%
