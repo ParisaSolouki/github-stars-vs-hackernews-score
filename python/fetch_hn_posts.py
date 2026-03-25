@@ -440,4 +440,50 @@ conn.close()
 
 
 print("Connection closed")
+
+
+# %%
+# =====================================
+# 15) Load Analysis Dataset from MySQL
+# =====================================
+
+conn = mysql.connector.connect(
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME"),
+)
+
+print("Connected to database")
+
+
+query = """
+SELECT 
+    h.hn_id,
+    h.score AS hn_score,
+    h.comments AS hn_comments,
+    g.repo_id,
+    g.stars AS github_stars,
+    g.forks AS github_forks,
+    g.language
+FROM hn_posts h
+JOIN github_repos g
+    ON h.repo_id = g.repo_id
+WHERE h.score IS NOT NULL
+  AND g.stars IS NOT NULL
+  AND h.score > 0
+  AND g.stars > 0;
+"""
+
+
+df_analysis = pd.read_sql(query, conn)
+
+conn.close()
+print("Connection closed")
+
+
+print("df_analysis shape:", df_analysis.shape)
+
+
+df_analysis.head()
 # %%

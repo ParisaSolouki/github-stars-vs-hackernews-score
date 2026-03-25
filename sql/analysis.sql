@@ -20,7 +20,7 @@ FROM hn_posts h
 JOIN github_repos g
     ON h.repo_id = g.repo_id;
 
-    -- =====================================
+-- =====================================
 -- 2) Summary metrics
 -- =====================================
 
@@ -150,7 +150,6 @@ JOIN github_repos g
 GROUP BY g.repo_id, g.full_name
 ORDER BY avg_hn_score DESC
 LIMIT 10;
-
 
 -- =====================================
 -- 7) Distribution dataset for analysis (Python)
