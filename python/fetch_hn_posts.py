@@ -523,4 +523,15 @@ plt.title("Distribution of Hacker News Scores")
 plt.xlabel("HN Score")
 plt.ylabel("Frequency")
 plt.show()
+
+
 # %%
+# =====================================
+# 20) GitHub Stars Distribution
+# =====================================
+
+plt.hist(df_analysis["github_stars"], bins=12, edgecolor="black")
+plt.title("Distribution of GitHub Stars")
+plt.xlabel("GitHub Stars")
+plt.ylabel("Frequency")
+plt.show()
