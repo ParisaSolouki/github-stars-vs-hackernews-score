@@ -5,6 +5,7 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 import mysql.connector
+import matplotlib.pyplot as plt
 
 # Load environment variables from .env
 load_dotenv()
@@ -511,4 +512,15 @@ df_analysis.describe()
 
 df_analysis.isna().sum()
 
+
+# %%
+# =====================================
+# 19) HN Score Distribution
+# =====================================
+
+plt.hist(df_analysis["hn_score"], bins=12, edgecolor="black")
+plt.title("Distribution of Hacker News Scores")
+plt.xlabel("HN Score")
+plt.ylabel("Frequency")
+plt.show()
 # %%
