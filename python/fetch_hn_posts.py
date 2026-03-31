@@ -573,3 +573,42 @@ plt.show()
 
 
 # %%
+# =====================================
+# EDA Part 2: Core Cross-Platform Relationship Analysis
+# =====================================
+
+
+# %%
+# =====================================
+# 23) HN Score vs Raw GitHub Stars
+# =====================================
+
+plt.scatter(df_analysis["github_stars"], df_analysis["hn_score"])
+plt.title("HN Score vs Raw GitHub Stars")
+plt.xlabel("GitHub Stars")
+plt.ylabel("HN Score")
+plt.show()
+
+
+# %%
+# =====================================
+# 24) HN Score vs Log GitHub Stars
+# =====================================
+
+plt.scatter(df_analysis["log_github_stars"], df_analysis["hn_score"])
+plt.title("HN Score vs Log GitHub Stars")
+plt.xlabel("Log(GitHub Stars + 1)")
+plt.ylabel("HN Score")
+plt.show()
+
+
+# %%
+# =====================================
+# 25) Correlation Comparison for HN Score
+# =====================================
+
+score_corr_summary = df_analysis[
+    ["hn_score", "log_hn_score", "github_stars", "log_github_stars"]
+].corr()
+
+score_corr_summary
