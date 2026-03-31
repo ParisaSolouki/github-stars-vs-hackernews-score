@@ -612,3 +612,99 @@ score_corr_summary = df_analysis[
 ].corr()
 
 score_corr_summary
+
+
+# %%
+# =====================================
+# EDA Part 3: Supporting Analysis
+# =====================================
+
+
+# %%
+# =====================================
+# 26) HN Comments Distribution
+# =====================================
+
+plt.hist(df_analysis["hn_comments"], bins=12, edgecolor="black")
+plt.title("Distribution of Hacker News Comments")
+plt.xlabel("HN Comments")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# %%
+# =====================================
+# 27) Log-Transformed HN Comments Distribution
+# =====================================
+
+df_analysis["log_hn_comments"] = np.log1p(df_analysis["hn_comments"])
+
+plt.hist(df_analysis["log_hn_comments"], bins=12, edgecolor="black")
+plt.title("Distribution of Log-Transformed HN Comments")
+plt.xlabel("Log(HN Comments + 1)")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# %%
+# =====================================
+# 28) HN Comments vs Log GitHub Stars
+# =====================================
+
+plt.scatter(df_analysis["log_github_stars"], df_analysis["hn_comments"])
+plt.title("HN Comments vs Log GitHub Stars")
+plt.xlabel("Log(GitHub Stars + 1)")
+plt.ylabel("HN Comments")
+plt.show()
+
+
+# %%
+# =====================================
+# 29) Correlation Comparison for HN Comments
+# =====================================
+
+comments_corr_summary = df_analysis[
+    ["hn_comments", "log_hn_comments", "github_stars", "log_github_stars"]
+].corr()
+
+comments_corr_summary
+
+
+# %%
+# =====================================
+# 30) Final Correlation Summary
+# =====================================
+
+final_corr_summary = pd.DataFrame(
+    {
+        "relationship": [
+            "hn_score vs github_stars",
+            "hn_score vs log_github_stars",
+            "log_hn_score vs log_github_stars",
+            "hn_comments vs github_stars",
+            "hn_comments vs log_github_stars",
+            "log_hn_comments vs log_github_stars",
+        ],
+        "correlation": [
+            df_analysis["hn_score"].corr(df_analysis["github_stars"]),
+            df_analysis["hn_score"].corr(df_analysis["log_github_stars"]),
+            df_analysis["log_hn_score"].corr(df_analysis["log_github_stars"]),
+            df_analysis["hn_comments"].corr(df_analysis["github_stars"]),
+            df_analysis["hn_comments"].corr(df_analysis["log_github_stars"]),
+            df_analysis["log_hn_comments"].corr(df_analysis["log_github_stars"]),
+        ],
+    }
+)
+
+
+# round for readability
+final_corr_summary["correlation"] = final_corr_summary["correlation"].round(3)
+
+# add trend column
+final_corr_summary["trend"] = final_corr_summary["correlation"].apply(
+    lambda x: "positive" if x > 0 else "negative" if x < 0 else "no relationship"
+)
+
+final_corr_summary
+
+# %%
