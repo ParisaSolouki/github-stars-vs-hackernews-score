@@ -5,6 +5,8 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 import mysql.connector
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Load environment variables from .env
 load_dotenv()
@@ -510,5 +512,64 @@ df_analysis.describe()
 # =====================================
 
 df_analysis.isna().sum()
+
+
+# %%
+# =====================================
+# EDA Part 1: Core Distribution Analysis
+# =====================================
+
+
+# %%
+# =====================================
+# 19) HN Score Distribution
+# =====================================
+
+plt.hist(df_analysis["hn_score"], bins=12, edgecolor="black")
+plt.title("Distribution of Hacker News Scores")
+plt.xlabel("HN Score")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# %%
+# =====================================
+# 20) GitHub Stars Distribution
+# =====================================
+
+plt.hist(df_analysis["github_stars"], bins=12, edgecolor="black")
+plt.title("Distribution of GitHub Stars")
+plt.xlabel("GitHub Stars")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# %%
+# =====================================
+# 21) Log-Transformed GitHub Stars Distribution
+# =====================================
+
+df_analysis["log_github_stars"] = np.log1p(df_analysis["github_stars"])
+
+plt.hist(df_analysis["log_github_stars"], bins=12, edgecolor="black")
+plt.title("Distribution of Log-Transformed GitHub Stars")
+plt.xlabel("Log(GitHub Stars + 1)")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# %%
+# =====================================
+# 22) Log-Transformed HN Score Distribution
+# =====================================
+
+df_analysis["log_hn_score"] = np.log1p(df_analysis["hn_score"])
+
+plt.hist(df_analysis["log_hn_score"], bins=12, edgecolor="black")
+plt.title("Distribution of Log-Transformed HN Score")
+plt.xlabel("Log(HN Score + 1)")
+plt.ylabel("Frequency")
+plt.show()
+
 
 # %%
