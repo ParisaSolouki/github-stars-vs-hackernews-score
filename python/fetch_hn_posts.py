@@ -707,4 +707,70 @@ final_corr_summary["trend"] = final_corr_summary["correlation"].apply(
 
 final_corr_summary
 
+
 # %%
+# =====================================
+# EDA Part 4: Forks Analysis
+# =====================================
+
+
+# %%
+# =====================================
+# 31) GitHub Forks Distribution
+# =====================================
+
+plt.hist(df_analysis["github_forks"], bins=12, edgecolor="black")
+plt.title("Distribution of GitHub Forks")
+plt.xlabel("GitHub Forks")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# %%
+# =====================================
+# 32) Log-Transformed GitHub Forks Distribution
+# =====================================
+
+df_analysis["log_github_forks"] = np.log1p(df_analysis["github_forks"])
+
+plt.hist(df_analysis["log_github_forks"], bins=12, edgecolor="black")
+plt.title("Distribution of Log-Transformed GitHub Forks")
+plt.xlabel("Log(GitHub Forks + 1)")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# %%
+# =====================================
+# 33) HN Score vs Raw GitHub Forks
+# =====================================
+
+plt.scatter(df_analysis["github_forks"], df_analysis["hn_score"])
+plt.title("HN Score vs Raw GitHub Forks")
+plt.xlabel("GitHub Forks")
+plt.ylabel("HN Score")
+plt.show()
+
+
+# %%
+# =====================================
+# 34) HN Score vs Log GitHub Forks
+# =====================================
+
+plt.scatter(df_analysis["log_github_forks"], df_analysis["hn_score"])
+plt.title("HN Score vs Log GitHub Forks")
+plt.xlabel("Log(GitHub Forks + 1)")
+plt.ylabel("HN Score")
+plt.show()
+
+
+# %%
+# =====================================
+# 35) Correlation Comparison for HN Score vs Forks
+# =====================================
+
+forks_corr_summary = df_analysis[
+    ["hn_score", "log_hn_score", "github_forks", "log_github_forks"]
+].corr()
+
+forks_corr_summary
