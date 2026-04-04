@@ -864,4 +864,33 @@ performance_display = performance_comparison[cols_to_show]
 performance_display.sort_values(
     by=["group", "hn_score"], ascending=[True, False]
 ).reset_index(drop=True)
+
+
 # %%
+# =====================================
+# 42) Create Performance Gap Metric
+# =====================================
+
+df_analysis["z_hn_score"] = (
+    df_analysis["hn_score"] - df_analysis["hn_score"].mean()
+) / df_analysis["hn_score"].std()
+
+df_analysis["z_github_stars"] = (
+    df_analysis["github_stars"] - df_analysis["github_stars"].mean()
+) / df_analysis["github_stars"].std()
+
+df_analysis["performance_gap"] = (
+    df_analysis["z_hn_score"] - df_analysis["z_github_stars"]
+)
+
+df_analysis[
+    [
+        "title",
+        "full_name",
+        "github_stars",
+        "hn_score",
+        "z_github_stars",
+        "z_hn_score",
+        "performance_gap",
+    ]
+].sort_values(by="performance_gap", ascending=False).head(10)
