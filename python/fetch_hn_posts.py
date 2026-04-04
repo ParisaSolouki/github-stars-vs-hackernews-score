@@ -458,13 +458,14 @@ conn = mysql.connector.connect(
 
 print("Connected to database")
 
-
 query = """
 SELECT 
     h.hn_id,
+    h.title,
     h.score AS hn_score,
     h.comments AS hn_comments,
     g.repo_id,
+    g.full_name,
     g.stars AS github_stars,
     g.forks AS github_forks,
     g.language
@@ -476,7 +477,6 @@ WHERE h.score IS NOT NULL
   AND h.score > 0
   AND g.stars > 0;
 """
-
 
 df_analysis = pd.read_sql(query, conn)
 
@@ -831,9 +831,6 @@ underperformers[["repo_id", "github_stars", "hn_score", "hn_comments"]]
 # 39) Compare Overperformers vs Underperformers
 # =====================================
 
-overperformers = overperformers.copy()
-underperformers = underperformers.copy()
-
 overperformers["group"] = "overperformer"
 underperformers["group"] = "underperformer"
 
@@ -847,4 +844,24 @@ performance_stats = (
 
 performance_stats
 
+
+# %%
+# =====================================
+# 41) Show Overperformers vs Underperformers (Readable)
+# =====================================
+
+cols_to_show = [
+    "title",
+    "full_name",
+    "github_stars",
+    "hn_score",
+    "hn_comments",
+    "group",
+]
+
+performance_display = performance_comparison[cols_to_show]
+
+performance_display.sort_values(
+    by=["group", "hn_score"], ascending=[True, False]
+).reset_index(drop=True)
 # %%
