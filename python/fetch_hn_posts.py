@@ -774,3 +774,20 @@ forks_corr_summary = df_analysis[
 ].corr()
 
 forks_corr_summary
+
+
+# %%
+# =====================================
+# 36) Create Quartiles for Stars and HN Score
+# =====================================
+
+df_analysis["stars_quartile"] = pd.qcut(
+    df_analysis["github_stars"], q=4, labels=[1, 2, 3, 4]
+)
+
+df_analysis["score_quartile"] = pd.qcut(
+    df_analysis["hn_score"], q=4, labels=[1, 2, 3, 4]
+)
+
+df_analysis[["github_stars", "hn_score", "stars_quartile", "score_quartile"]].head(10)
+# %%
