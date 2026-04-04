@@ -894,3 +894,30 @@ df_analysis[
         "performance_gap",
     ]
 ].sort_values(by="performance_gap", ascending=False).head(10)
+
+
+# %%
+# =====================================
+# 43) Top Repositories by Performance Gap
+# =====================================
+
+top_gap_repos = df_analysis[
+    ["title", "full_name", "github_stars", "hn_score", "performance_gap"]
+].sort_values(by="performance_gap", ascending=False)
+
+print("Top Repositories by Performance Gap")
+top_gap_repos.head(10)
+
+
+# %%
+# =====================================
+# 44) Lowest Repositories by Performance Gap
+# =====================================
+
+bottom_gap_repos = df_analysis[
+    ["title", "full_name", "github_stars", "hn_score", "performance_gap"]
+].sort_values(by="performance_gap", ascending=True)
+
+print("Lowest Repositories by Performance Gap")
+bottom_gap_repos.head(10)
+# %%
