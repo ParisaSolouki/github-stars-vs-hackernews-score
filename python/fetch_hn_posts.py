@@ -824,4 +824,27 @@ underperformers = underperformers.sort_values(by="github_stars", ascending=False
 print("Number of underperformers:", len(underperformers))
 
 underperformers[["repo_id", "github_stars", "hn_score", "hn_comments"]]
+
+
+# %%
+# =====================================
+# 39) Compare Overperformers vs Underperformers
+# =====================================
+
+overperformers = overperformers.copy()
+underperformers = underperformers.copy()
+
+overperformers["group"] = "overperformer"
+underperformers["group"] = "underperformer"
+
+performance_comparison = pd.concat([overperformers, underperformers], ignore_index=True)
+
+performance_stats = (
+    performance_comparison.groupby("group")[["github_stars", "hn_score", "hn_comments"]]
+    .agg(["mean", "median"])
+    .round(2)
+)
+
+performance_stats
+
 # %%
