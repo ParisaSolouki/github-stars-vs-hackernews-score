@@ -790,4 +790,21 @@ df_analysis["score_quartile"] = pd.qcut(
 )
 
 df_analysis[["github_stars", "hn_score", "stars_quartile", "score_quartile"]].head(10)
+
+
+# %%
+# =====================================
+# 37) Extract HN Overperformers (Relaxed Definition)
+# =====================================
+
+overperformers = df_analysis[
+    (df_analysis["stars_quartile"].astype(int) <= 2)
+    & (df_analysis["score_quartile"].astype(int) >= 3)
+]
+
+overperformers = overperformers.sort_values(by="hn_score", ascending=False)
+
+print("Number of overperformers:", len(overperformers))
+
+overperformers[["repo_id", "github_stars", "hn_score", "hn_comments"]]
 # %%
