@@ -807,4 +807,21 @@ overperformers = overperformers.sort_values(by="hn_score", ascending=False)
 print("Number of overperformers:", len(overperformers))
 
 overperformers[["repo_id", "github_stars", "hn_score", "hn_comments"]]
+
+
+# %%
+# =====================================
+# 38) Extract HN Underperformers
+# =====================================
+
+underperformers = df_analysis[
+    (df_analysis["stars_quartile"].astype(int) >= 3)
+    & (df_analysis["score_quartile"].astype(int) <= 2)
+]
+
+underperformers = underperformers.sort_values(by="github_stars", ascending=False)
+
+print("Number of underperformers:", len(underperformers))
+
+underperformers[["repo_id", "github_stars", "hn_score", "hn_comments"]]
 # %%
