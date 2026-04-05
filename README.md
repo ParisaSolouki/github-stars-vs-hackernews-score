@@ -191,6 +191,6 @@ Potential future improvements for this project:
 
 I built this project to explore how repository popularity on GitHub relates to attention and discussion on Hacker News.
 
-The goal was not only to compare two platforms, but also to work through a full analysis workflow using real-world API data — including data extraction, cleaning, SQL storage, exploratory analysis, and interpretation.
+The goal was not only to compare two platforms, but also to work through a full analysis workflow using real - world API data - including data extraction, cleaning, SQL storage, exploratory analysis, and interpretation.
 
 ---
