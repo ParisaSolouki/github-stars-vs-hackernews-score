@@ -446,7 +446,7 @@ print("Connection closed")
 
 # %%
 # =====================================
-# 15) Load Analysis Dataset from MySQL
+# 15) Load Analysis Dataset
 # =====================================
 
 conn = mysql.connector.connect(
@@ -467,7 +467,6 @@ SELECT
     g.repo_id,
     g.full_name,
     g.stars AS github_stars,
-    g.forks AS github_forks,
     g.language
 FROM hn_posts h
 JOIN github_repos g
@@ -483,16 +482,13 @@ df_analysis = pd.read_sql(query, conn)
 conn.close()
 print("Connection closed")
 
-
 print("df_analysis shape:", df_analysis.shape)
-
-
 df_analysis.head()
 
 
 # %%
 # =====================================
-# 16) Dataset Structure
+# 16) Dataset Inspection
 # =====================================
 
 df_analysis.info()
@@ -516,27 +512,30 @@ df_analysis.isna().sum()
 
 # %%
 # =====================================
-# EDA Part 1: Core Distribution Analysis
+# 19) Duplicate & Grain Check
 # =====================================
+
+print("Unique HN posts:", df_analysis["hn_id"].nunique())
+print("Unique repos:", df_analysis["repo_id"].nunique())
+
+# check duplicates
+print("Duplicate HN IDs:", df_analysis["hn_id"].duplicated().sum())
+print("Duplicate repo IDs:", df_analysis["repo_id"].duplicated().sum())
 
 
 # %%
 # =====================================
-# 19) HN Score Distribution
+# 20) Core Distributions
 # =====================================
 
+# HN Score
 plt.hist(df_analysis["hn_score"], bins=12, edgecolor="black")
 plt.title("Distribution of Hacker News Scores")
 plt.xlabel("HN Score")
 plt.ylabel("Frequency")
 plt.show()
 
-
-# %%
-# =====================================
-# 20) GitHub Stars Distribution
-# =====================================
-
+# GitHub Stars
 plt.hist(df_analysis["github_stars"], bins=12, edgecolor="black")
 plt.title("Distribution of GitHub Stars")
 plt.xlabel("GitHub Stars")
@@ -546,57 +545,40 @@ plt.show()
 
 # %%
 # =====================================
-# 21) Log-Transformed GitHub Stars Distribution
-# =====================================
-
-df_analysis["log_github_stars"] = np.log1p(df_analysis["github_stars"])
-
-plt.hist(df_analysis["log_github_stars"], bins=12, edgecolor="black")
-plt.title("Distribution of Log-Transformed GitHub Stars")
-plt.xlabel("Log(GitHub Stars + 1)")
-plt.ylabel("Frequency")
-plt.show()
-
-
-# %%
-# =====================================
-# 22) Log-Transformed HN Score Distribution
+# 21) Log Transformations
 # =====================================
 
 df_analysis["log_hn_score"] = np.log1p(df_analysis["hn_score"])
+df_analysis["log_github_stars"] = np.log1p(df_analysis["github_stars"])
 
 plt.hist(df_analysis["log_hn_score"], bins=12, edgecolor="black")
-plt.title("Distribution of Log-Transformed HN Score")
+plt.title("Log(HN Score)")
 plt.xlabel("Log(HN Score + 1)")
 plt.ylabel("Frequency")
 plt.show()
 
-
-# %%
-# =====================================
-# EDA Part 2: Core Cross-Platform Relationship Analysis
-# =====================================
-
-
-# %%
-# =====================================
-# 23) HN Score vs Raw GitHub Stars
-# =====================================
-
-plt.scatter(df_analysis["github_stars"], df_analysis["hn_score"])
-plt.title("HN Score vs Raw GitHub Stars")
-plt.xlabel("GitHub Stars")
-plt.ylabel("HN Score")
+plt.hist(df_analysis["log_github_stars"], bins=12, edgecolor="black")
+plt.title("Log(GitHub Stars)")
+plt.xlabel("Log(GitHub Stars + 1)")
+plt.ylabel("Frequency")
 plt.show()
 
 
 # %%
 # =====================================
-# 24) HN Score vs Log GitHub Stars
+# 22) Relationship: HN Score vs Stars
 # =====================================
 
+# raw
+plt.scatter(df_analysis["github_stars"], df_analysis["hn_score"])
+plt.title("HN Score vs GitHub Stars")
+plt.xlabel("GitHub Stars")
+plt.ylabel("HN Score")
+plt.show()
+
+# log
 plt.scatter(df_analysis["log_github_stars"], df_analysis["hn_score"])
-plt.title("HN Score vs Log GitHub Stars")
+plt.title("HN Score vs Log Stars")
 plt.xlabel("Log(GitHub Stars + 1)")
 plt.ylabel("HN Score")
 plt.show()
@@ -604,55 +586,49 @@ plt.show()
 
 # %%
 # =====================================
-# 25) Correlation Comparison for HN Score
+# 23) Correlation Summary
 # =====================================
 
-score_corr_summary = df_analysis[
-    ["hn_score", "log_hn_score", "github_stars", "log_github_stars"]
-].corr()
+corr_summary = pd.DataFrame(
+    {
+        "relationship": [
+            "hn_score vs github_stars",
+            "hn_score vs log_github_stars",
+            "log_hn_score vs log_github_stars",
+        ],
+        "correlation": [
+            df_analysis["hn_score"].corr(df_analysis["github_stars"]),
+            df_analysis["hn_score"].corr(df_analysis["log_github_stars"]),
+            df_analysis["log_hn_score"].corr(df_analysis["log_github_stars"]),
+        ],
+    }
+)
 
-score_corr_summary
+corr_summary["correlation"] = corr_summary["correlation"].round(3)
+corr_summary
 
 
 # %%
 # =====================================
-# EDA Part 3: Supporting Analysis
-# =====================================
-
-
-# %%
-# =====================================
-# 26) HN Comments Distribution
-# =====================================
-
-plt.hist(df_analysis["hn_comments"], bins=12, edgecolor="black")
-plt.title("Distribution of Hacker News Comments")
-plt.xlabel("HN Comments")
-plt.ylabel("Frequency")
-plt.show()
-
-
-# %%
-# =====================================
-# 27) Log-Transformed HN Comments Distribution
+# 24) Supporting Analysis: Comments
 # =====================================
 
 df_analysis["log_hn_comments"] = np.log1p(df_analysis["hn_comments"])
 
+plt.hist(df_analysis["hn_comments"], bins=12, edgecolor="black")
+plt.title("HN Comments")
+plt.xlabel("HN Comments")
+plt.ylabel("Frequency")
+plt.show()
+
 plt.hist(df_analysis["log_hn_comments"], bins=12, edgecolor="black")
-plt.title("Distribution of Log-Transformed HN Comments")
+plt.title("Log(HN Comments)")
 plt.xlabel("Log(HN Comments + 1)")
 plt.ylabel("Frequency")
 plt.show()
 
-
-# %%
-# =====================================
-# 28) HN Comments vs Log GitHub Stars
-# =====================================
-
 plt.scatter(df_analysis["log_github_stars"], df_analysis["hn_comments"])
-plt.title("HN Comments vs Log GitHub Stars")
+plt.title("HN Comments vs Log Stars")
 plt.xlabel("Log(GitHub Stars + 1)")
 plt.ylabel("HN Comments")
 plt.show()
@@ -660,35 +636,17 @@ plt.show()
 
 # %%
 # =====================================
-# 29) Correlation Comparison for HN Comments
+# 25) Comments Correlation Summary
 # =====================================
 
-comments_corr_summary = df_analysis[
-    ["hn_comments", "log_hn_comments", "github_stars", "log_github_stars"]
-].corr()
-
-comments_corr_summary
-
-
-# %%
-# =====================================
-# 30) Final Correlation Summary
-# =====================================
-
-final_corr_summary = pd.DataFrame(
+comments_corr_summary = pd.DataFrame(
     {
         "relationship": [
-            "hn_score vs github_stars",
-            "hn_score vs log_github_stars",
-            "log_hn_score vs log_github_stars",
             "hn_comments vs github_stars",
             "hn_comments vs log_github_stars",
             "log_hn_comments vs log_github_stars",
         ],
         "correlation": [
-            df_analysis["hn_score"].corr(df_analysis["github_stars"]),
-            df_analysis["hn_score"].corr(df_analysis["log_github_stars"]),
-            df_analysis["log_hn_score"].corr(df_analysis["log_github_stars"]),
             df_analysis["hn_comments"].corr(df_analysis["github_stars"]),
             df_analysis["hn_comments"].corr(df_analysis["log_github_stars"]),
             df_analysis["log_hn_comments"].corr(df_analysis["log_github_stars"]),
@@ -696,89 +654,12 @@ final_corr_summary = pd.DataFrame(
     }
 )
 
-
-# round for readability
-final_corr_summary["correlation"] = final_corr_summary["correlation"].round(3)
-
-# add trend column
-final_corr_summary["trend"] = final_corr_summary["correlation"].apply(
-    lambda x: "positive" if x > 0 else "negative" if x < 0 else "no relationship"
-)
-
-final_corr_summary
-
+comments_corr_summary["correlation"] = comments_corr_summary["correlation"].round(3)
+comments_corr_summary
 
 # %%
 # =====================================
-# EDA Part 4: Forks Analysis
-# =====================================
-
-
-# %%
-# =====================================
-# 31) GitHub Forks Distribution
-# =====================================
-
-plt.hist(df_analysis["github_forks"], bins=12, edgecolor="black")
-plt.title("Distribution of GitHub Forks")
-plt.xlabel("GitHub Forks")
-plt.ylabel("Frequency")
-plt.show()
-
-
-# %%
-# =====================================
-# 32) Log-Transformed GitHub Forks Distribution
-# =====================================
-
-df_analysis["log_github_forks"] = np.log1p(df_analysis["github_forks"])
-
-plt.hist(df_analysis["log_github_forks"], bins=12, edgecolor="black")
-plt.title("Distribution of Log-Transformed GitHub Forks")
-plt.xlabel("Log(GitHub Forks + 1)")
-plt.ylabel("Frequency")
-plt.show()
-
-
-# %%
-# =====================================
-# 33) HN Score vs Raw GitHub Forks
-# =====================================
-
-plt.scatter(df_analysis["github_forks"], df_analysis["hn_score"])
-plt.title("HN Score vs Raw GitHub Forks")
-plt.xlabel("GitHub Forks")
-plt.ylabel("HN Score")
-plt.show()
-
-
-# %%
-# =====================================
-# 34) HN Score vs Log GitHub Forks
-# =====================================
-
-plt.scatter(df_analysis["log_github_forks"], df_analysis["hn_score"])
-plt.title("HN Score vs Log GitHub Forks")
-plt.xlabel("Log(GitHub Forks + 1)")
-plt.ylabel("HN Score")
-plt.show()
-
-
-# %%
-# =====================================
-# 35) Correlation Comparison for HN Score vs Forks
-# =====================================
-
-forks_corr_summary = df_analysis[
-    ["hn_score", "log_hn_score", "github_forks", "log_github_forks"]
-].corr()
-
-forks_corr_summary
-
-
-# %%
-# =====================================
-# 36) Create Quartiles for Stars and HN Score
+# 26) Quartile Segmentation
 # =====================================
 
 df_analysis["stars_quartile"] = pd.qcut(
@@ -789,86 +670,44 @@ df_analysis["score_quartile"] = pd.qcut(
     df_analysis["hn_score"], q=4, labels=[1, 2, 3, 4]
 )
 
-df_analysis[["github_stars", "hn_score", "stars_quartile", "score_quartile"]].head(10)
+df_analysis[["github_stars", "hn_score", "stars_quartile", "score_quartile"]].head()
 
 
 # %%
 # =====================================
-# 37) Extract HN Overperformers (Relaxed Definition)
+# 27) Overperformers vs Underperformers
 # =====================================
 
 overperformers = df_analysis[
     (df_analysis["stars_quartile"].astype(int) <= 2)
     & (df_analysis["score_quartile"].astype(int) >= 3)
-]
-
-overperformers = overperformers.sort_values(by="hn_score", ascending=False)
-
-print("Number of overperformers:", len(overperformers))
-
-overperformers[["repo_id", "github_stars", "hn_score", "hn_comments"]]
-
-
-# %%
-# =====================================
-# 38) Extract HN Underperformers
-# =====================================
+].copy()
 
 underperformers = df_analysis[
     (df_analysis["stars_quartile"].astype(int) >= 3)
     & (df_analysis["score_quartile"].astype(int) <= 2)
-]
+].copy()
 
-underperformers = underperformers.sort_values(by="github_stars", ascending=False)
-
-print("Number of underperformers:", len(underperformers))
-
-underperformers[["repo_id", "github_stars", "hn_score", "hn_comments"]]
+print("Overperformers:", len(overperformers))
+print("Underperformers:", len(underperformers))
 
 
 # %%
 # =====================================
-# 39) Compare Overperformers vs Underperformers
+# 28) Performance Comparison
 # =====================================
 
-overperformers["group"] = "overperformer"
-underperformers["group"] = "underperformer"
+overperformers["group"] = "over"
+underperformers["group"] = "under"
 
-performance_comparison = pd.concat([overperformers, underperformers], ignore_index=True)
+comparison = pd.concat([overperformers, underperformers], ignore_index=True)
 
-performance_stats = (
-    performance_comparison.groupby("group")[["github_stars", "hn_score", "hn_comments"]]
-    .agg(["mean", "median"])
-    .round(2)
-)
-
-performance_stats
+comparison.groupby("group")[["github_stars", "hn_score", "hn_comments"]].mean().round(2)
 
 
 # %%
 # =====================================
-# 41) Show Overperformers vs Underperformers (Readable)
-# =====================================
-
-cols_to_show = [
-    "title",
-    "full_name",
-    "github_stars",
-    "hn_score",
-    "hn_comments",
-    "group",
-]
-
-performance_display = performance_comparison[cols_to_show]
-
-performance_display.sort_values(
-    by=["group", "hn_score"], ascending=[True, False]
-).reset_index(drop=True)
-
-
-# %%
-# =====================================
-# 42) Create Performance Gap Metric
+# 29) Performance Gap Metric
 # =====================================
 
 df_analysis["z_hn_score"] = (
@@ -883,41 +722,65 @@ df_analysis["performance_gap"] = (
     df_analysis["z_hn_score"] - df_analysis["z_github_stars"]
 )
 
-df_analysis[
-    [
-        "title",
-        "full_name",
-        "github_stars",
-        "hn_score",
-        "z_github_stars",
-        "z_hn_score",
-        "performance_gap",
-    ]
-].sort_values(by="performance_gap", ascending=False).head(10)
+df_analysis.sort_values(by="performance_gap", ascending=False)[
+    ["title", "full_name", "github_stars", "hn_score", "performance_gap"]
+].head(10)
 
 
 # %%
 # =====================================
-# 43) Top Repositories by Performance Gap
+# 30) Top / Bottom Performers
 # =====================================
 
-top_gap_repos = df_analysis[
-    ["title", "full_name", "github_stars", "hn_score", "performance_gap"]
-].sort_values(by="performance_gap", ascending=False)
+print("Top performers:")
+df_analysis.sort_values(by="performance_gap", ascending=False)[
+    ["title", "full_name", "github_stars", "hn_score", "hn_comments", "performance_gap"]
+].head(10)
 
-print("Top Repositories by Performance Gap")
-top_gap_repos.head(10)
+# %%
 
+
+print("\nBottom performers:")
+df_analysis.sort_values(by="performance_gap", ascending=True)[
+    ["title", "full_name", "github_stars", "hn_score", "hn_comments", "performance_gap"]
+].head(10)
 
 # %%
 # =====================================
-# 44) Lowest Repositories by Performance Gap
+# 31) Final Insights Summary
 # =====================================
 
-bottom_gap_repos = df_analysis[
-    ["title", "full_name", "github_stars", "hn_score", "performance_gap"]
-].sort_values(by="performance_gap", ascending=True)
+print("===== FINAL INSIGHTS =====\n")
 
-print("Lowest Repositories by Performance Gap")
-bottom_gap_repos.head(10)
+print("1) Relationship between GitHub stars and HN score:")
+print(
+    "- There is a clear positive relationship between GitHub stars and Hacker News score."
+)
+print(
+    "- The strongest score relationship appeared when GitHub stars were log-transformed.\n"
+)
+
+print("2) Distribution characteristics:")
+print("- GitHub stars, HN score, and HN comments are all right-skewed.")
+print("- A small number of repositories receive disproportionately high attention.\n")
+
+print("3) Engagement beyond visibility:")
+print("- GitHub stars are also positively associated with HN comments.")
+print(
+    "- This suggests that more popular repositories tend to generate more discussion.\n"
+)
+
+print("4) Overperformers vs Underperformers:")
+print(
+    "- Some repositories perform significantly better than expected based on their GitHub stars."
+)
+print("- Others perform worse despite having high popularity.\n")
+
+print("5) Key insight:")
+print("- GitHub popularity helps explain Hacker News performance,")
+print("  but it does NOT fully determine it.\n")
+
+print("6) Final conclusion:")
+print("- Hacker News success depends not only on popularity,")
+print("  but also on other factors such as timing, topic, and presentation.")
 # %%
