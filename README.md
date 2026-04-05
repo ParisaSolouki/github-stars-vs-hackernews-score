@@ -50,7 +50,7 @@ Each row represents:
 - **MySQL**
 - **DBeaver**
 - **VS Code**
-- **Git / GitHub**
+- **GitHub**
 
 ---
 
