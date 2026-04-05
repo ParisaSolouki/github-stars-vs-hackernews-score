@@ -151,7 +151,8 @@ GITHUB-STARS-VS-HACKERNEWS-SCORE/
 │
 ├── .env
 ├── .gitignore
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 ### File Description
@@ -174,6 +175,9 @@ GITHUB-STARS-VS-HACKERNEWS-SCORE/
 - **data/**  
   Optional folder for storing local outputs or exported files
 
+- **LICENSE**  
+  MIT License for project usage and reuse
+
 ---
 
 ## Possible Next Steps
@@ -192,5 +196,18 @@ Potential future improvements for this project:
 I built this project to explore how repository popularity on GitHub relates to attention and discussion on Hacker News.
 
 The goal was not only to compare two platforms, but also to work through a full analysis workflow using real - world API data - including data extraction, cleaning, SQL storage, exploratory analysis, and interpretation.
+
+---
+
+## Usage
+
+This project is shared for learning and portfolio purposes.  
+If you use or adapt parts of the code, please consider giving credit.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
 
 ---
