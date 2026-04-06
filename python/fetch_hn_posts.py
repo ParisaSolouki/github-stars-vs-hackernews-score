@@ -1,4 +1,11 @@
 # %%
+# Hacker News ↔ GitHub Data Analysis Pipeline
+# -------------------------------------------
+# This project collects top stories from the Hacker News API, identifies posts
+# that link to GitHub repositories, enriches them with GitHub repository metadata,
+# stores the cleaned data in MySQL, and performs exploratory analysis on the
+# relationship between Hacker News engagement and GitHub popularity.
+
 import requests
 from datetime import datetime, timezone
 import pandas as pd
@@ -8,7 +15,8 @@ import mysql.connector
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Load environment variables from .env
+
+# Load API/database credentials from local environment variables
 load_dotenv()
 
 
@@ -16,6 +24,7 @@ load_dotenv()
 # =====================================
 # 1) Fetch Hacker News Top Stories IDs
 # =====================================
+
 TOPSTORIES_URL = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
 
 
@@ -28,7 +37,7 @@ def fetch_topstories_ids(url=TOPSTORIES_URL, timeout=10):
         resp.raise_for_status()
         ids = resp.json()
 
-        # validation ids type
+        # Validate that the API response is a list of story IDs
         if not isinstance(ids, list):
             raise ValueError("Unexpected response: topstories is not a list")
 
@@ -55,6 +64,8 @@ top_ids, run_time_utc = fetch_topstories_ids()
 # =====================================
 # 2) Extract Posts Data -> df_hn_posts
 # =====================================
+
+# Reuse a session for multiple API calls to keep requests cleaner and more efficient
 session = requests.Session()
 headers = {"User-Agent": "hn_github_tracker/1.0 (data project)"}
 session.headers.update(headers)
@@ -71,6 +82,7 @@ for item_id in top_ids:
         resp.raise_for_status()
         item = resp.json()
 
+        # Skip malformed responses that are not dictionaries
         if not isinstance(item, dict):
             continue
 
@@ -90,12 +102,13 @@ for item_id in top_ids:
     except requests.exceptions.RequestException:
         continue
 
-
+# Create a structured DataFrame from raw Hacker News item responses
 df_hn_posts = pd.DataFrame(rows)
 df_hn_posts.head(10)
 
 
 # %%
+# Convert Unix timestamps into readable UTC datetimes for analysis and database storage
 df_hn_posts["post_time"] = pd.to_datetime(
     df_hn_posts["time_unix"], unit="s", utc=True, errors="coerce"
 )
@@ -112,6 +125,7 @@ df_hn_posts.head(10)
 # 3) Filter GitHub URLs -> df_hn_github_posts
 # =====================================
 
+# Keep only posts that reference GitHub links, since these are the focus of the project
 df_hn_posts["url"] = df_hn_posts["url"].fillna("").astype(str)
 
 github_mask = df_hn_posts["url"].str.contains(r"github\.com", case=False, na=False)
@@ -122,11 +136,13 @@ df_hn_github_posts[["hn_id", "url"]].head(10)
 
 
 # %%
+# Inspect extracted domains to verify the URL filtering step
 domains = df_hn_github_posts["url"].str.extract(r"https?://([^/]+)/")
 print(domains.value_counts().head(10))
 
 
 # %%
+# Exclude gist links because they do not represent full repositories
 gist_mask = df_hn_github_posts["url"].str.contains(
     r"gist\.github\.com", case=False, na=False
 )
@@ -140,6 +156,8 @@ print("GitHub non-gist URLs:", df_hn_github_posts.shape[0])
 # =====================================
 # 4) Extract owner/repo/full_name from URL (robust)
 # =====================================
+
+# Extract repository owner/name from GitHub URLs for later API enrichment and database linking
 pattern = r"github\.com/([^/]+)/([^/#?]+)"
 
 df_hn_github_posts[["owner", "repo_raw"]] = df_hn_github_posts["url"].str.extract(
@@ -147,6 +165,7 @@ df_hn_github_posts[["owner", "repo_raw"]] = df_hn_github_posts["url"].str.extrac
 )
 
 
+# Clean repository names by removing '.git' suffixes and extra whitespace
 df_hn_github_posts["repo"] = (
     df_hn_github_posts["repo_raw"]
     .str.replace(r"\.git$", "", regex=True)
@@ -154,6 +173,7 @@ df_hn_github_posts["repo"] = (
 )
 
 
+# full_name will be used as the common repository key (owner/repo)
 df_hn_github_posts["full_name"] = (
     df_hn_github_posts["owner"] + "/" + df_hn_github_posts["repo"]
 )
@@ -161,7 +181,7 @@ df_hn_github_posts.head(10)
 
 
 # %%
-# Bad Extracts
+# Identify extraction failures for manual inspection
 bad = df_hn_github_posts[
     df_hn_github_posts["owner"].isna() | df_hn_github_posts["repo"].isna()
 ]
@@ -169,7 +189,7 @@ print("Bad extracts:", len(bad))
 bad[["hn_id", "url"]].head(10)
 
 
-# # Keep only rows with valid owner and repo
+# Keep only rows with valid owner and repo values
 df_hn_github_posts = df_hn_github_posts.dropna(subset=["owner", "repo"]).copy()
 
 print("Final GitHub repo links:", df_hn_github_posts.shape[0])
@@ -181,6 +201,7 @@ df_hn_github_posts[["hn_id", "full_name", "url"]].head(10)
 # 5) Fetch GitHub Repository Data -> df_github_repos
 # =====================================
 
+# Deduplicate repositories to avoid repeated GitHub API requests
 unique_repos = df_hn_github_posts[["owner", "repo", "full_name"]].drop_duplicates()
 print("Unique repos:", unique_repos.shape[0])
 
@@ -190,6 +211,7 @@ headers = {
 }
 
 
+# Use a GitHub token when available to reduce rate-limit issues
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 if GITHUB_TOKEN:
     headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
@@ -244,6 +266,7 @@ df_github_repos.head()
 # 6) Prepare GitHub Data for MySQL
 # =====================================
 
+# Standardize fields and convert timestamps before database insertion
 df_github_repos[["owner", "repo"]] = df_github_repos["full_name"].str.split(
     "/", expand=True
 )
@@ -276,6 +299,7 @@ df_to_db.head()
 # =====================================
 # 7) Connect to MySQL
 # =====================================
+
 conn = mysql.connector.connect(
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
@@ -291,6 +315,8 @@ print("Connected to database")
 # =====================================
 # 8) Prepare rows for insert
 # =====================================
+
+# Convert DataFrame rows into tuples for executemany()
 repo_rows = []
 
 for row in df_to_db.itertuples(index=False, name=None):
@@ -329,17 +355,17 @@ print("GitHub repos upsert completed")
 
 hn_to_db = df_hn_posts.copy()
 
-# clean url
+# Clean URL field to avoid null/string issues during extraction and insertion
 hn_to_db["url"] = hn_to_db["url"].fillna("").astype(str)
 
-# clean important text columns
+# Clean important text columns
 hn_to_db["title"] = hn_to_db["title"].astype("string")
 hn_to_db["author"] = hn_to_db["author"].astype("string")
 
-# remove broken rows
+# Remove broken rows that are missing essential fields
 hn_to_db = hn_to_db.dropna(subset=["hn_id", "title", "author", "post_time"]).copy()
 
-# extract full_name from GitHub URLs for later linking
+# Extract full_name from GitHub URLs for later linking
 pattern = r"github\.com/([^/]+)/([^/#?]+)"
 hn_to_db[["owner_tmp", "repo_tmp"]] = hn_to_db["url"].str.extract(pattern)
 
@@ -351,7 +377,7 @@ hn_to_db["repo_tmp"] = (
 
 hn_to_db["full_name"] = hn_to_db["owner_tmp"] + "/" + hn_to_db["repo_tmp"]
 
-# repo_id will be filled later
+# repo_id will be filled later after matching with github_repos
 hn_to_db["repo_id"] = None
 
 # keep only columns needed for MySQL
@@ -380,6 +406,7 @@ hn_to_db.head()
 # 11) Prepare HN rows for insert
 # =====================================
 
+# Convert DataFrame rows into tuples for executemany()
 post_rows = []
 
 for row in hn_to_db.itertuples(index=False, name=None):
@@ -419,6 +446,7 @@ print("HN posts upsert completed")
 # 13) Link repo_id using UPDATE JOIN
 # =====================================
 
+# Link Hacker News posts to repository IDs through the shared full_name key
 link_sql = """
 UPDATE hn_posts h
 JOIN github_repos g
@@ -458,6 +486,8 @@ conn = mysql.connector.connect(
 
 print("Connected to database")
 
+# Build the final analysis dataset by joining Hacker News posts with GitHub repositories
+# Only rows with non-null and positive score/star values are kept for comparison
 query = """
 SELECT 
     h.hn_id,
@@ -491,6 +521,7 @@ df_analysis.head()
 # 16) Dataset Inspection
 # =====================================
 
+# Review column types, non-null counts, and overall structure
 df_analysis.info()
 
 
@@ -499,6 +530,7 @@ df_analysis.info()
 # 17) Summary Statistics
 # =====================================
 
+# Inspect summary metrics for numeric columns
 df_analysis.describe()
 
 
@@ -507,6 +539,7 @@ df_analysis.describe()
 # 18) Missing Values Check
 # =====================================
 
+# Verify whether the joined analysis dataset still contains missing values
 df_analysis.isna().sum()
 
 
@@ -515,10 +548,13 @@ df_analysis.isna().sum()
 # 19) Duplicate & Grain Check
 # =====================================
 
+# Grain check:
+# - hn_id should ideally be unique at post level
+# - repo_id may repeat because multiple Hacker News posts can reference the same repository
 print("Unique HN posts:", df_analysis["hn_id"].nunique())
 print("Unique repos:", df_analysis["repo_id"].nunique())
 
-# check duplicates
+# Check duplicates directly
 print("Duplicate HN IDs:", df_analysis["hn_id"].duplicated().sum())
 print("Duplicate repo IDs:", df_analysis["repo_id"].duplicated().sum())
 
@@ -527,6 +563,8 @@ print("Duplicate repo IDs:", df_analysis["repo_id"].duplicated().sum())
 # =====================================
 # 20) Core Distributions
 # =====================================
+
+# Plot the main distributions to inspect spread and skewness
 
 # HN Score
 plt.hist(df_analysis["hn_score"], bins=12, edgecolor="black")
@@ -548,6 +586,7 @@ plt.show()
 # 21) Log Transformations
 # =====================================
 
+# Apply log transformation to reduce right-skewness and make patterns easier to interpret
 df_analysis["log_hn_score"] = np.log1p(df_analysis["hn_score"])
 df_analysis["log_github_stars"] = np.log1p(df_analysis["github_stars"])
 
@@ -569,6 +608,8 @@ plt.show()
 # 22) Relationship: HN Score vs Stars
 # =====================================
 
+# Compare raw and log-scaled relationships to see whether the association becomes clearer
+
 # raw
 plt.scatter(df_analysis["github_stars"], df_analysis["hn_score"])
 plt.title("HN Score vs GitHub Stars")
@@ -589,6 +630,7 @@ plt.show()
 # 23) Correlation Summary
 # =====================================
 
+# Summarize how the relationship changes under different transformations
 corr_summary = pd.DataFrame(
     {
         "relationship": [
@@ -613,6 +655,7 @@ corr_summary
 # 24) Supporting Analysis: Comments
 # =====================================
 
+# Comments are used as a supporting engagement metric, not the primary target of the analysis
 df_analysis["log_hn_comments"] = np.log1p(df_analysis["hn_comments"])
 
 plt.hist(df_analysis["hn_comments"], bins=12, edgecolor="black")
@@ -639,6 +682,7 @@ plt.show()
 # 25) Comments Correlation Summary
 # =====================================
 
+# Measure whether repository popularity is also associated with discussion volume
 comments_corr_summary = pd.DataFrame(
     {
         "relationship": [
@@ -662,6 +706,7 @@ comments_corr_summary
 # 26) Quartile Segmentation
 # =====================================
 
+# Segment repositories/posts into quartiles to compare relative popularity and engagement levels
 df_analysis["stars_quartile"] = pd.qcut(
     df_analysis["github_stars"], q=4, labels=[1, 2, 3, 4]
 )
@@ -678,6 +723,8 @@ df_analysis[["github_stars", "hn_score", "stars_quartile", "score_quartile"]].he
 # 27) Overperformers vs Underperformers
 # =====================================
 
+# Overperformers: lower-star repositories with relatively high HN scores
+# Underperformers: higher-star repositories with relatively low HN scores
 overperformers = df_analysis[
     (df_analysis["stars_quartile"].astype(int) <= 2)
     & (df_analysis["score_quartile"].astype(int) >= 3)
@@ -697,6 +744,7 @@ print("Underperformers:", len(underperformers))
 # 28) Performance Comparison
 # =====================================
 
+# Compare average score, stars, and comments across the two mismatch groups
 overperformers["group"] = "over"
 underperformers["group"] = "under"
 
@@ -710,6 +758,8 @@ comparison.groupby("group")[["github_stars", "hn_score", "hn_comments"]].mean().
 # 29) Performance Gap Metric
 # =====================================
 
+# Standardize score and stars with z-scores, then compare them on the same relative scale
+# A higher performance_gap means the post performed better on Hacker News than GitHub popularity alone would suggest
 df_analysis["z_hn_score"] = (
     df_analysis["hn_score"] - df_analysis["hn_score"].mean()
 ) / df_analysis["hn_score"].std()
@@ -732,6 +782,7 @@ df_analysis.sort_values(by="performance_gap", ascending=False)[
 # 30) Top / Bottom Performers
 # =====================================
 
+# Show repositories/posts with the largest positive and negative performance gaps
 print("Top performers:")
 df_analysis.sort_values(by="performance_gap", ascending=False)[
     ["title", "full_name", "github_stars", "hn_score", "hn_comments", "performance_gap"]
@@ -750,6 +801,7 @@ df_analysis.sort_values(by="performance_gap", ascending=True)[
 # 31) Final Insights Summary
 # =====================================
 
+# Final text summary of the main findings from the exploratory analysis
 print("===== FINAL INSIGHTS =====\n")
 
 print("1) Relationship between GitHub stars and HN score:")
@@ -783,4 +835,3 @@ print("  but it does NOT fully determine it.\n")
 print("6) Final conclusion:")
 print("- Hacker News success depends not only on popularity,")
 print("  but also on other factors such as timing, topic, and presentation.")
-# %%
